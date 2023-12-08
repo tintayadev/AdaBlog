@@ -362,6 +362,7 @@ Proceso de verificar la identidad mediante la comprobación de un token.
 Un `token` es un elemento simbólico que expide una fuente de confianza. Pensemos en cómo los policías llevan consigo una insignia expedida por las autoridades que legitima su autoridad. Las fichas pueden ser físicas (como una llave USB) o digitales (un mensaje generado por ordenador o una firma digital)
 
 Empezamos añadiendo a `adablog/settings.py`
+
 en `INSTALLED_APPS`
 
 ```python
@@ -371,6 +372,16 @@ INSTALLED_APPS = [
     'blog',
     'rest_framework.authtoken' #agregamos esta linea
 ]
+```
+y al final del archivo `settings.py`
+
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
+
 ```
 Actualizamos las vistas de DRF creadas con generics, en `blog/views.py`
 ```python
@@ -399,6 +410,21 @@ def post_detail(request, pk):
     return render(request, 'post_detail.html', {'post': post})
 ```
 
+no olvidemos actualizar `blog/views.py`
+
+```python
+from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
+from .views import PostListCreateView, PostDetailView, post_list, post_detail
+
+urlpatterns = [
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),  # Para obtener tokens
+    path('api/posts/', PostListCreateView.as_view(), name='post-list-create'),
+    path('api/posts/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
+    path('posts/', post_list, name='post-list'),
+    path('posts/<int:pk>/', post_detail, name='post-detail-template'),
+]
+```
 Creamos un endpoint `api-token-auth` para que un usuario pueda obtener su respectivo `token` mediante un metodo POST. Y asi poder acceder a las vistas como:
 - http://127.0.0.1:8000/api/posts
 - http://127.0.0.1:8000/api/posts/1
